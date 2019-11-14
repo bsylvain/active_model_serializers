@@ -19,6 +19,17 @@ module ActionController
           assert_equal json_response_body.to_json, expected_errors_object
         end
 
+        def test_active_model_with_an_error_in_a_key_attribute
+          get :render_resource_with_error_in_a_key
+
+          expected_errors_object = {
+            errors:               [
+              { source: { pointer: '/data/attributes/title' }, detail: 'cannot be nil' }
+            ]
+          }.to_json
+          assert_equal json_response_body.to_json, expected_errors_object
+        end
+
         def json_response_body
           JSON.load(@response.body)
         end
@@ -31,6 +42,14 @@ module ActionController
             resource.errors.add(:name, 'cannot be nil')
             resource.errors.add(:name, 'must be longer')
             resource.errors.add(:id, 'must be a uuid')
+            render json: resource, adapter: :json_api, serializer: ActiveModel::Serializer::ErrorSerializer
+          end
+
+          def render_resource_with_error_in_a_key
+            #Need to Add a title key to desctiption
+            resource = Profile.new(name: 'Name 1',
+                                   description: 'Description 1')
+            resource.errors.add(:description, 'cannot be nil')
             render json: resource, adapter: :json_api, serializer: ActiveModel::Serializer::ErrorSerializer
           end
         end
